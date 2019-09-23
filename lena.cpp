@@ -68,6 +68,15 @@ void write_ucmatrix(int size_x, int size_y, uchar** ucmatrix, char* filename)
 	fclose(f);
 }
 
+void Negative(int size_x, int size_y, uchar** img, uchar** Result)
+{
+	int i, j;
+
+	for (i = 0; i < size_y; i++)
+		for (j = 0; j < size_x; j++)
+			Result[i][j] = 255 - img[i][j]
+}
+
 
 int main(int argc, char* argv[])
 {
@@ -88,7 +97,8 @@ int main(int argc, char* argv[])
 	read_ucmatrix(imgSize.width, imgSize.height, img, argv[1]);
 	
 	cvImg = cvCreateImage(imgSize, 8, 1);
-	
+	Negative(imgSize.width, imgSize.height, img, img);
+
 	for (i = 0; i < imgSize.height; i++)
 		for (j = 0; j < imgSize.width; j++)
 		{

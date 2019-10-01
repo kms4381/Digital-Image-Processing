@@ -68,39 +68,6 @@ void write_ucmatrix(int size_x, int size_y, uchar** ucmatrix, char* filename)
 	fclose(f);
 }
 
-void Negative(int size_x, int size_y, uchar** img, uchar** Result)
-{
-	int i, j;
-
-	for (i = 0; i < size_y; i++)
-		for (j = 0; j < size_x; j++)
-			Result[i][j] = 255 - img[i][j]
-}
-
-void mosaic(uchar** img, uchar** out, int Row, int Col, char Block) {
-	int i, j, x, y, tmp, count;
-
-	for (i = 0; i < Row; i += Block) {
-		for (j = 0; j < Col; j += Block) {
-			tmp = 0;
-			count = 0;
-			for (y = 0; y < Block; y++) {
-				for (x = 0; x < Block; x++) {
-					tmp += img[j + x][i + y];
-					count++;
-				}
-			}
-			tmp /= count;
-			for (y = 0; y < Block; y++) {
-				for (x = 0; x < Block; x++) {
-					out[j + x][i + y] = tmp;
-				}
-			}
-		}
-	}
-}
-
-
 int main(int argc, char* argv[])
 {
 
@@ -109,20 +76,19 @@ int main(int argc, char* argv[])
 	CvSize imgSize;
 	uchar** img;
 
-	if (argc != 6)
+	if (argc != 4)
 	{
 		printf("Exe imgData x_size y_size \n");
 		exit(0);
 	}
+
 	imgSize.width = atoi(argv[2]);
 	imgSize.height = atoi(argv[3]);
 	img = uc_alloc(imgSize.width, imgSize.height);
 	read_ucmatrix(imgSize.width, imgSize.height, img, argv[1]);
 	
 	cvImg = cvCreateImage(imgSize, 8, 1);
-	//Negative(imgSize.width, imgSize.height, img, img);
-	mosaic(img, img, imgSize.width, imgSize.height, atoi(argv[4]));
-	
+
 	for (i = 0; i < imgSize.height; i++)
 		for (j = 0; j < imgSize.width; j++)
 		{
@@ -133,7 +99,6 @@ int main(int argc, char* argv[])
 	cvNamedWindow(argv[1], 1);
 	cvShowImage(argv[1], cvImg);
 
-	write_ucmatrix(imgSize.width, imgSize.height, img, argv[5]);
 	cvWaitKey(0);
 
 	cvDestroyWindow("image");

@@ -1,4 +1,4 @@
-#include <opencv\cv.h>
+癤�#include <opencv\cv.h>
 #include<opencv\highgui.h>
 #include<opencv\cxcore.h>
 
@@ -7,7 +7,7 @@
 #define unsigned char uchar
 
 
-uchar** uc_alloc(int size_x, int size_y) // 행렬 메모리 할당 x,y
+uchar** uc_alloc(int size_x, int size_y)
 {
 
 	uchar** m;
@@ -68,6 +68,8 @@ void write_ucmatrix(int size_x, int size_y, uchar** ucmatrix, char* filename)
 	fclose(f);
 }
 
+
+
 double average(uchar** img, int size_x, int size_y)
 {
 	double sum = 0, avg;
@@ -85,80 +87,93 @@ double average(uchar** img, int size_x, int size_y)
 	return avg;
 }
 
-void PowImg(uchar** img, uchar** Result, int Row, int Col, double gamma)
+void BitSlicing(uchar** img, uchar** Result, int Row, int Col, int position)
 {
 	int i, j;
-	double tmp;
+	uchar mask = 0x01;
+	mask <<= position;
 
-	for (i = 0; i < Row; i++)//행
-		for (j = 0; j < Col; j++)//열
+	for (i = 0; i < Row; i++)
+		for (j = 0; j < Col; j++)
 		{
-			tmp = pow(img[j][i] / 255., 1 / gamma);
+			if ((mask & img[j][i]) == pow(2, position))
+			{
+				Result[j][i] = 255;
+			}
+			else
+			{
+				Result[j][i] = 0;
+			}
 
-			if (tmp * 255 > 255)tmp = 1;
-			else if (tmp * 255 < 0) tmp = 0;
-
-			tmp = tmp * 255;
-
-			Result[j][i] = tmp;
 		}
 }
 
+int main(int argc, char* argv[])
+{
 
-int main(int argc, char* argv[]) {
-	int i, j;
-	double avg, gamma = 1;
+	int i, j, count;
+	double sum;
 	IplImage* cvImg;
 	CvSize imgSize;
-	uchar** img,** result_img;
+	uchar** img, ** result_img;
+	uchar** simg4, ** simg5, ** simg6, ** simg7;
 
-	if (argc != 4) {
+	if (argc != 5)
+	{
 		printf("Exe imgData x_size y_size \n");
 		exit(0);
 	}
-
 	imgSize.width = atoi(argv[2]);
 	imgSize.height = atoi(argv[3]);
-
-	cvImg = cvCreateImage(imgSize, 8, 1);
-
+	count = atoi(argv[4]);
 	img = uc_alloc(imgSize.width, imgSize.height);
 	result_img = uc_alloc(imgSize.width, imgSize.height);
 
+	simg5 = uc_alloc(imgSize.width, imgSize.height);
+	simg6 = uc_alloc(imgSize.width, imgSize.height);
+	simg7 = uc_alloc(imgSize.width, imgSize.height);
+	simg4 = uc_alloc(imgSize.width, imgSize.height);
+
 	read_ucmatrix(imgSize.width, imgSize.height, img, argv[1]);
 
-	avg = average(img, imgSize.width, imgSize.height);
+	cvImg = cvCreateImage(imgSize, 8, 1);
 
-	if (avg < 128) {
-		while (avg < 128) {
-			gamma = gamma + 0.001;
-			PowImg(img, result_img, imgSize.width, imgSize.height, gamma);
-			avg = average(result_img, imgSize.width, imgSize.height);
-			printf("Average of Image %lf \n", avg);
-		}
-	}
-	else if (avg > 128) {
-		while (avg > 128) {
-			gamma = gamma - 0.001;
-			PowImg(img, result_img, imgSize.width, imgSize.height, gamma);
-			avg = average(result_img, imgSize.width, imgSize.height);
-			printf("Average of Image %lf \n", avg);
-		}
-	}
-	else
-		PowImg(img, result_img, imgSize.width, imgSize.height, gamma);
+	BitSlicing(img, simg7, imgSize.width, imgSize.height, 7);
+	BitSlicing(img, simg6, imgSize.width, imgSize.height, 6);
+	BitSlicing(img, simg5, imgSize.width, imgSize.height, 5);
+	BitSlicing(img, simg4, imgSize.width, imgSize.height, 4);
 
-	for (i = 0; i < imgSize.width; i++)
-		for (j = 0; j < imgSize.height; j++) {
-			((uchar*)(cvImg->imageData + cvImg->widthStep * j))[i] = result_img[j][i];
+
+	for (i = 0; i < imgSize.height; i++)
+		for (j = 0; j < imgSize.width; j++)
+		{
+			if (count == 4) {
+				result_img[i][j] = simg7[i][j] / 2 + simg6[i][j] / 4 + simg5[i][j] / 8 + simg4[i][j] / 16;
+
+			}
+			if (count == 3) {
+				result_img[i][j] = simg7[i][j] / 2 + simg6[i][j] / 4 + simg5[i][j] / 8;
+			}
+
+
+			((uchar*)(cvImg->imageData + cvImg->widthStep * i))[j] = result_img[i][j];
+
 		}
 
-	cvNamedWindow(argv[1], 0);
+	sum = average(result_img, imgSize.width, imgSize.height);
+	printf("Average is %f\n", sum);
+
+
+	cvNamedWindow(argv[1], 1);
 	cvShowImage(argv[1], cvImg);
+
 	cvWaitKey(0);
 
+	cvDestroyWindow("image");
 	cvReleaseImage(&cvImg);
 
+	getchar();
 
 	return 0;
+
 }
